@@ -6,15 +6,39 @@ $currentFrame = $GlobalDebuggerFrames[0];
 
 // var_dump($currentFrame);
 
-function formatted_lines($frame) {
-  $output = "<div class='code'>";
+// function formatted_lines($frame) {
+//   $output = "<div class='code'>";
+// 
+//   $linesBack = 7;
+//   $lines = $frame["lines"];
+//   $lineNum = $frame["line_num"];
+// 
+//   $startNum = max(0, $lineNum - $linesBack) + 1;
+//   $endNum = min(count($lines), $lineNum + $linesBack);
+// 
+//   for ($i = $startNum; $i < $endNum; $i++) {
+//     $line = $lines[$i];
+//     $className = "";
+//     if ($i + 1 === $lineNum) {
+//       $className = "highlight";
+//     }
+//     $output .= "<pre class='{$className}'>{$line}</pre>";
+//   }
+// 
+//   return $output."</div>";
+// }
 
-  $linesBack = 7;
+function formatted_lines($frame) {
+  $linesBack = 8;
   $lines = $frame["lines"];
   $lineNum = $frame["line_num"];
-
   $startNum = max(0, $lineNum - $linesBack) + 1;
   $endNum = min(count($lines), $lineNum + $linesBack);
+  $highlightLine = $lineNum;
+
+  $output = "<pre data-line='".$highlightLine."'";
+  $output .= " data-line-offset='".$startNum."'>";
+  $output .= "<code class='language-php'>";
 
   for ($i = $startNum; $i < $endNum; $i++) {
     $line = $lines[$i];
@@ -22,10 +46,10 @@ function formatted_lines($frame) {
     if ($i + 1 === $lineNum) {
       $className = "highlight";
     }
-    $output .= "<pre class='{$className}'>{$line}</pre>";
+    $output .= $line;
   }
 
-  return $output."</div>";
+  return $output."</code></pre>";
 }
 
 function formatted_nums($frame) {
@@ -51,7 +75,7 @@ function formatted_nums($frame) {
 }
 
 function formatted_code($frame) {
-  return formatted_nums($frame).formatted_lines($frame);
+  return formatted_lines($frame);
 }
 
 ?>
@@ -61,6 +85,7 @@ function formatted_code($frame) {
 <html>
 <head>
 <title></title>
+<link rel="stylesheet" href="/lib/better_errors/prism.css" />
 </head>
 <body>
     <style>
@@ -936,5 +961,7 @@ function formatted_code($frame) {
         allFramesButton.onclick();
     }
 })();
+</script>
+<script src="/lib/better_errors/prism.js">
 </script>
 </html>
