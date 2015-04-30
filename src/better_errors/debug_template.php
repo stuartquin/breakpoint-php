@@ -13,13 +13,13 @@ function formatted_lines($frame) {
   $lines = $frame["lines"];
   $lineNum = $frame["line_num"];
 
-  $startNum = max(0, $lineNum - $linesBack);
+  $startNum = max(0, $lineNum - $linesBack) + 1;
   $endNum = min(count($lines), $lineNum + $linesBack);
 
   for ($i = $startNum; $i < $endNum; $i++) {
     $line = $lines[$i];
     $className = "";
-    if ($i === $lineNum - 1) {
+    if ($i + 1 === $lineNum) {
       $className = "highlight";
     }
     $output .= "<pre class='{$className}'>{$line}</pre>";
@@ -35,13 +35,13 @@ function formatted_nums($frame) {
   $lines = $frame["lines"];
   $lineNum = $frame["line_num"];
 
-  $startNum = max(0, $lineNum - $linesBack);
+  $startNum = max(0, $lineNum - $linesBack) + 1;
   $endNum = min(count($lines), $lineNum + $linesBack);
 
   for ($i = $startNum; $i < $endNum; $i++) {
     $line = $lines[$i];
     $className = "";
-    if ($i === $lineNum - 1) {
+    if ($i + 1 === $lineNum) {
       $className = "highlight";
     }
     $output .= "<span class='{$className}'>{$i}</span>";
@@ -171,7 +171,12 @@ function formatted_code($frame) {
             padding: 20px;
             padding-left: 10px;
             margin-left: 30px;
+
+            display: none;
         }
+    }
+    #frame_info_0 {
+      display: block;
     }
 
     nav.sidebar {
@@ -324,6 +329,10 @@ function formatted_code($frame) {
         overflow: hidden;
     }
 
+    ul.frames .name strong {
+      padding-right: 10px;
+    }
+
     ul.frames .name,
     ul.frames .location {
         overflow: hidden;
@@ -430,7 +439,7 @@ function formatted_code($frame) {
         }
 
         ul.frames .name {
-            margin-right: 10px;
+            padding-right: 10px;
         }
     }
 
@@ -767,12 +776,15 @@ function formatted_code($frame) {
       <ul class="frames">
       <?php for($i = 0; $i < count($frames); $i++) { ?>
       <?php $frame = $frames[$i]; ?>
-        <li class="<%= frame.context %>" data-context="<%= frame.context %>" data-index="<?= $i ?>">
+        <li class="" data-context="" data-index="<?= $i ?>">
           <span class='stroke'></span>
           <i class="icon"></i>
           <div class="info">
             <div class="name">
-            <strong><?= $frame["class_name"] ?></strong> <span class='method'><?= $frame["method_name"] ?></span>
+            <?php if (isset($frame["class_name"])) { ?>
+            <strong><?= $frame["class_name"] ?></strong>
+            <?php } ?>
+            <span class='method'><?= $frame["method_name"] ?></span>
             </div>
             <div class="location">
             <span class="filename"><?= $frame["filename"] ?></span>, line <span class="line"><?= $frame["line_num"] - 1?></span>
@@ -783,27 +795,28 @@ function formatted_code($frame) {
         </ul>
     </nav>
 
-    <div class="frame_info">
+    <?php for($i = 0; $i < count($frames); $i++) { ?>
+    <?php $frame = $frames[$i]; ?>
+    <div class="frame_info" id="frame_info_<?= $i ?>">
       <header class="trace_info clearfix">
           <div class="title">
-          <h2 class="name"><?= $currentFrame["method_name"] ?></h2>
-              <div class="location"><span class="filename"><a href=""><?= $currentFrame["filename"] ?></a></span></div>
+          <h2 class="name"><?= $frame["method_name"] ?></h2>
+              <div class="location"><span class="filename"><a href=""><?= $frame["filename"] ?></a></span></div>
           </div>
           <div class="code_block clearfix">
-            <?= formatted_code($currentFrame); ?>
+            <?= formatted_code($frame); ?>
           </div>
       </header>
-      
       
       <div class="sub">
           <h3>Request info</h3>
           <div class='inset variables'>
               <table class="var_table">
-                  <?php if(isset($currentFrame["request"])){ ?>
-                  <tr><td class="name">Request</td><td><pre><?php var_dump($currentFrame["request"]) ?></pre></td></tr>
+                  <?php if(isset($frame["request"])){ ?>
+                  <tr><td class="name">Request</td><td><pre><?php print_r($frame["request"]) ?></pre></td></tr>
                   <?php } ?>
-                  <?php if(isset($currentFrame["session"])){ ?>
-                  <tr><td class="name">Session</td><td><pre><?php var_dump($currentFrame["session"]) ?></pre></td></tr>
+                  <?php if(isset($frame["session"])){ ?>
+                  <tr><td class="name">Session</td><td><pre><?php print_r($frame["session"]) ?></pre></td></tr>
                   <?php } ?>
               </table>
           </div>
@@ -813,7 +826,7 @@ function formatted_code($frame) {
           <h3>Local Variables</h3>
           <div class='inset variables'>
               <table class="var_table">
-                  <?php foreach($currentFrame["local"] as $name => $val) { ?>
+                  <?php foreach($frame["local"] as $name => $val) { ?>
                   <tr><td class="name"><?= $name ?></td><td><pre><?php print_r($val) ?></pre></td></tr>
                   <?php } ?>
               </table>
@@ -824,200 +837,34 @@ function formatted_code($frame) {
           <h3>Instance Variables</h3>
           <div class="inset variables">
               <table class="var_table">
-                  <?php foreach($currentFrame["instance"] as $name => $val) { ?>
+                  <?php foreach($frame["instance"] as $name => $val) { ?>
                   <tr><td class="name"><?= $name ?></td><td><pre><?php print_r($val) ?></pre></td></tr>
                   <?php } ?>
               </table>
           </div>
       </div>
     </div> <!-- frame_info -->
+    <?php } ?>
 </section>
 </body>
 <script>
 (function() {
-
-    var OID = "<%= id %>";
-
     var previousFrame = null;
     var previousFrameInfo = null;
     var allFrames = document.querySelectorAll("ul.frames li");
     var allFrameInfos = document.querySelectorAll(".frame_info");
-
-    function apiCall(method, opts, cb) {
-        var req = new XMLHttpRequest();
-        req.open("POST", <%== uri_prefix.gsub("<", "&lt;").inspect %> + "/__better_errors/" + OID + "/" + method, true);
-        req.setRequestHeader("Content-Type", "application/json");
-        req.send(JSON.stringify(opts));
-        req.onreadystatechange = function() {
-            if(req.readyState == 4) {
-                var res = JSON.parse(req.responseText);
-                cb(res);
-            }
-        };
-    }
-
-    function escapeHTML(html) {
-        return html.replace(/&/, "&amp;").replace(/</g, "&lt;");
-    }
-
-    function REPL(index) {
-        this.index = index;
-
-        var previousCommands = JSON.parse(localStorage.getItem("better_errors_previous_commands"));
-        if(previousCommands === null) {
-          localStorage.setItem("better_errors_previous_commands", JSON.stringify([]));
-          previousCommands = [];
-        }
-
-        this.previousCommandOffset = previousCommands.length;
-    }
-
-    REPL.all = [];
-
-    REPL.prototype.install = function(containerElement) {
-        this.container = containerElement;
-
-        this.promptElement  = this.container.querySelector(".prompt span");
-        this.inputElement   = this.container.querySelector("input");
-        this.outputElement  = this.container.querySelector("pre");
-
-        var self = this;
-        this.inputElement.onkeydown = function(ev) {
-            self.onKeyDown(ev);
-        };
-
-        this.setPrompt(">>");
-
-        REPL.all[this.index] = this;
-    }
-
-    REPL.prototype.focus = function() {
-        this.inputElement.focus();
-    };
-
-    REPL.prototype.setPrompt = function(prompt) {
-        this._prompt = prompt;
-        this.promptElement.innerHTML = escapeHTML(prompt);
-    };
-
-    REPL.prototype.getInput = function() {
-        return this.inputElement.value;
-    };
-
-    REPL.prototype.setInput = function(text) {
-        this.inputElement.value = text;
-
-        if(this.inputElement.setSelectionRange) {
-            // set cursor to end of input
-            this.inputElement.setSelectionRange(text.length, text.length);
-        }
-    };
-
-    REPL.prototype.writeRawOutput = function(output) {
-        this.outputElement.innerHTML += output;
-        this.outputElement.scrollTop = this.outputElement.scrollHeight;
-    };
-
-    REPL.prototype.writeOutput = function(output) {
-        this.writeRawOutput(escapeHTML(output));
-    };
-
-    REPL.prototype.sendInput = function(line) {
-        var self = this;
-        apiCall("eval", { "index": this.index, source: line }, function(response) {
-            if(response.error) {
-                self.writeOutput(response.error + "\n");
-            }
-            self.writeOutput(self._prompt + " ");
-            self.writeRawOutput(response.highlighted_input + "\n");
-            self.writeOutput(response.result);
-            self.setPrompt(response.prompt);
-            self.setInput(response.prefilled_input);
-        });
-    };
-
-    REPL.prototype.onEnterKey = function() {
-        var text = this.getInput();
-        if(text != "" && text !== undefined) {
-            var previousCommands = JSON.parse(localStorage.getItem("better_errors_previous_commands"));
-            this.previousCommandOffset = previousCommands.push(text);
-            if(previousCommands.length > 100) {
-              previousCommands.splice(0, 1);
-              this.previousCommandOffset -= 1;
-            }
-            localStorage.setItem("better_errors_previous_commands", JSON.stringify(previousCommands));
-        }
-        this.setInput("");
-        this.sendInput(text);
-    };
-
-    REPL.prototype.onNavigateHistory = function(direction) {
-        this.previousCommandOffset += direction;
-        var previousCommands = JSON.parse(localStorage.getItem("better_errors_previous_commands"));
-
-        if(this.previousCommandOffset < 0) {
-            this.previousCommandOffset = -1;
-            this.setInput("");
-            return;
-        }
-
-        if(this.previousCommandOffset >= previousCommands.length) {
-            this.previousCommandOffset = previousCommands.length;
-            this.setInput("");
-            return;
-        }
-
-        this.setInput(previousCommands[this.previousCommandOffset]);
-    };
-
-    REPL.prototype.onKeyDown = function(ev) {
-        if(ev.keyCode == 13) {
-            this.onEnterKey();
-        } else if(ev.keyCode == 38 || (ev.ctrlKey && ev.keyCode == 80)) {
-            // the user pressed the up arrow or Ctrl-P
-            this.onNavigateHistory(-1);
-            ev.preventDefault();
-            return false;
-        } else if(ev.keyCode == 40 || (ev.ctrlKey && ev.keyCode == 78)) {
-            // the user pressed the down arrow or Ctrl-N
-            this.onNavigateHistory(1);
-            ev.preventDefault();
-            return false;
-        }
-    };
 
     function switchTo(el) {
         if(previousFrameInfo) previousFrameInfo.style.display = "none";
         previousFrameInfo = el;
 
         el.style.display = "block";
-
-        var replInput = el.querySelector('.console input');
-        if (replInput) replInput.focus();
     }
 
     function selectFrameInfo(index) {
         var el = allFrameInfos[index];
         if(el) {
-            if (el.loaded) {
-                return switchTo(el);
-            }
-
-            apiCall("variables", { "index": index }, function(response) {
-                el.loaded = true;
-                if(response.error) {
-                    el.innerHTML = "<span class='error'>" + escapeHTML(response.error) + "</span>";
-                } else {
-                    el.innerHTML = response.html;
-
-                    var repl = el.querySelector(".repl .console");
-                    if(repl) {
-                        new REPL(index).install(repl);
-                    }
-
-                    switchTo(el);
-                }
-            });
+          return switchTo(el);
         }
     }
 
@@ -1025,6 +872,7 @@ function formatted_code($frame) {
         (function(i, el) {
             var el = allFrames[i];
             el.onclick = function() {
+              debugger;
                 if(previousFrame) {
                     previousFrame.className = "";
                 }
@@ -1035,12 +883,6 @@ function formatted_code($frame) {
             };
         })(i);
     }
-
-    // Click the first application frame
-    (
-      document.querySelector(".frames li.application") ||
-      document.querySelector(".frames li")
-    ).onclick();
 
     // This is the second query performed for frames; maybe the 'allFrames' list
     // currently used and this list can be better used to avoid the repetition:
@@ -1096,5 +938,3 @@ function formatted_code($frame) {
 })();
 </script>
 </html>
-
-<!-- generated by Better Errors in <%= Time.now.to_f - @start_time %> seconds -->
