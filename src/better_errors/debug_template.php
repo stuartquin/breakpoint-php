@@ -794,10 +794,6 @@ function formatted_code($frame) {
     </div>
   <section class="backtrace">
     <nav class="sidebar">
-      <nav class="tabs">
-        <a href="#" id="application_frames">Application Frames</a>
-        <a href="#" id="all_frames">All Frames</a>
-      </nav>
       <ul class="frames">
       <?php for($i = 0; $i < count($frames); $i++) { ?>
       <?php $frame = $frames[$i]; ?>
@@ -882,6 +878,10 @@ function formatted_code($frame) {
     function switchTo(el) {
         if(previousFrameInfo) previousFrameInfo.style.display = "none";
         previousFrameInfo = el;
+
+        for(var i = 0; i < allFrameInfos.length; i++) {
+            allFrameInfos[i].style.display = "none";
+        }
 
         el.style.display = "block";
     }
