@@ -122,8 +122,8 @@ class Frame {
 
   public function inspect($local) {
     $this->exceptions = array(
-      "type" => "Frame",
-      "message" => "Inspect",
+      "type" => "Inspect",
+      "message" => "Halted for debugging",
       "path" => $_SERVER["REQUEST_URI"]
     );
 
