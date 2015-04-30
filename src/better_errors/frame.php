@@ -1,65 +1,67 @@
 <?php
-// error handler function
-function FrameErrorHandler($errNum, $errstr, $errfile, $errline) {
-  $errorType = null;
-  // print("<pre>");
-  // var_dump("NUM: ".$errNum);
-  // var_dump($errstr);
-  // var_dump($errfile);
-  // var_dump($errline);
-  // var_dump(E_USER_ERROR);
-  // var_dump(E_USER_WARNING);
-  // var_dump(E_USER_NOTICE);
-  // print("</pre>");
+error_reporting(E_USER_NOTICE);
 
-
+function getErrorType($errNum) {
   switch ($errNum) {
-    case E_USER_ERROR: $errorType = "ERROR"; break;
-    case E_USER_WARNING: $errorType = "WARNING"; break;
-    case E_USER_NOTICE: $errorType = "NOTICE"; break;
+    case E_ERROR: return "FATAL";
+    case E_USER_ERROR: return "ERROR";
+    case E_USER_WARNING: return "WARNING";
+    case E_USER_NOTICE: return "NOTICE";
+    case E_DEPRECATED: return "DEPRECATED";
   }
-
-  if ($errorType === null) {
-    return FALSE;
-  }
-
-  $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
-  Frame::Frame()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
-  return TRUE;
 }
 
-
-function FatalErrorHandler() {
-  $errfile = "unknown file";
-  $errstr = "shutdown";
-  $errNum = E_CORE_ERROR;
-  $errline = 0;
-
-  $error = error_get_last();
-
-  if( $error !== NULL) {
-    $errNum  = $error["type"];
-    $errfile = $error["file"];
-    $errline = $error["line"];
-    $errstr  = $error["message"];
-  }
-  $trace = debug_backtrace();
-
-  Frame::Frame()->except("FATAL", $errNum, $errstr, $errline, $errfile, $trace);
-  Frame::Frame()->render();
-  return TRUE;
-}
-
-// register_shutdown_function("FatalErrorHandler");
-set_error_handler("FrameErrorHandler");
+register_shutdown_function("Frame::FatalErrorHandler");
+set_error_handler("Frame::FrameErrorHandler");
 
 class Frame {
+  static $DEBUG_ERROR_LEVEL = E_USER_WARNING;
   private $frames = array();
   private $exceptions = array();
-
   static $instance = null;
+  static $level = null;
 
   function __construct() {
+  }
+
+  public static function FrameErrorHandler($errNum, $errstr, $errfile, $errline) {
+    $errorType = getErrorType($errNum);
+    if ($errorType === null) {
+      return FALSE;
+    }
+  
+    $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
+    if ($errNum <= error_reporting()) {
+      Frame::Frame()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
+      return TRUE;
+    }
+  }
+
+  public static function FatalErrorHandler() {
+    $errfile = "unknown file";
+    $errstr = "shutdown";
+    $errNum = E_CORE_ERROR;
+    $errline = 0;
+  
+    $error = error_get_last();
+    if( $error !== NULL) {
+      $errNum  = $error["type"];
+      $errfile = $error["file"];
+      $errline = $error["line"];
+      $errstr  = $error["message"];
+    }
+  
+    $errorType = getErrorType($errNum);
+    if ($errorType === null) {
+      return FALSE;
+    }
+    var_dump($errorType);
+    var_dump($errstr);
+
+    $trace = debug_backtrace();
+    Frame::Frame()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
+    Frame::Frame()->render();
+    return TRUE;
   }
 
   public static function Frame() {
