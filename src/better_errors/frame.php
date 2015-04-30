@@ -71,7 +71,7 @@ class Frame {
   }
 
   public function except($errType, $errNum, $message, $lineNum, $fileName, $trace) {
-    $this->exceptions = array(
+    $this->exceptions[] = array(
       "type" => $errType ." #".$errNum,
       "message" => $message,
       "path" => $_SERVER["REQUEST_URI"]
@@ -121,7 +121,7 @@ class Frame {
   }
 
   public function inspect($local) {
-    $this->exceptions = array(
+    $this->exceptions[] = array(
       "type" => "Inspect",
       "message" => "Halted for debugging",
       "path" => $_SERVER["REQUEST_URI"]
@@ -135,9 +135,9 @@ class Frame {
 
   public function render() {
     if (count($this->frames) > 0) {
-      global $GlobalDebuggerFrames, $GlobalDebuggerException;
+      global $GlobalDebuggerFrames, $GlobalDebuggerExceptions;
       $GlobalDebuggerFrames = $this->frames;
-      $GlobalDebuggerException = $this->exceptions;
+      $GlobalDebuggerExceptions = $this->exceptions;
       include("debug_template.php");
       exit;
     }

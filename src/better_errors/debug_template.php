@@ -1,32 +1,8 @@
 <?php
 global $GlobalDebuggerFrames;
-global $GlobalDebuggerException;
+global $GlobalDebuggerExceptions;
 $frames = $GlobalDebuggerFrames;
-$currentFrame = $GlobalDebuggerFrames[0];
-
-// var_dump($currentFrame);
-
-// function formatted_lines($frame) {
-//   $output = "<div class='code'>";
-// 
-//   $linesBack = 7;
-//   $lines = $frame["lines"];
-//   $lineNum = $frame["line_num"];
-// 
-//   $startNum = max(0, $lineNum - $linesBack) + 1;
-//   $endNum = min(count($lines), $lineNum + $linesBack);
-// 
-//   for ($i = $startNum; $i < $endNum; $i++) {
-//     $line = $lines[$i];
-//     $className = "";
-//     if ($i + 1 === $lineNum) {
-//       $className = "highlight";
-//     }
-//     $output .= "<pre class='{$className}'>{$line}</pre>";
-//   }
-// 
-//   return $output."</div>";
-// }
+$exceptions = $GlobalDebuggerExceptions;
 
 function formatted_lines($frame) {
   $linesBack = 8;
@@ -77,9 +53,8 @@ function formatted_nums($frame) {
 function formatted_code($frame) {
   return formatted_lines($frame);
 }
-
+// header("Content-Type:text/html");
 ?>
-
 
 <!DOCTYPE html>
 <html>
@@ -199,8 +174,17 @@ function formatted_code($frame) {
 
             display: none;
         }
+
     }
     #frame_info_0 {
+      display: block;
+    }
+
+    .exception {
+      display: none;
+    }
+    
+    #exception_0 {
       display: block;
     }
 
@@ -787,10 +771,13 @@ function formatted_code($frame) {
     </script>
 
     <div class='top'>
-        <header class="exception">
-        <h2><strong><?= $GlobalDebuggerException["type"] ?></strong> <span> at <?= $GlobalDebuggerException["path"] ?></span></h2>
-            <p><?= $GlobalDebuggerException["message"] ?></p>
+    <?php for($i = 0; $i < count($exceptions); $i++) { ?>
+    <?php $exception = $exceptions[$i]; ?>
+        <header class="exception" id="exception_<?= $i ?>">
+            <h2><strong><?= $exception["type"] ?></strong> <span> at <?= $exception["path"] ?></span></h2>
+            <p><?= $exception["message"] ?></p>
         </header>
+    <?php } ?>
     </div>
   <section class="backtrace">
     <nav class="sidebar">
@@ -870,96 +857,44 @@ function formatted_code($frame) {
 </body>
 <script>
 (function() {
-    var previousFrame = null;
-    var previousFrameInfo = null;
-    var allFrames = document.querySelectorAll("ul.frames li");
-    var allFrameInfos = document.querySelectorAll(".frame_info");
+  var previousFrame = null;
+  var previousFrameInfo = null;
+  var allFrames = document.querySelectorAll("ul.frames li");
+  var allFrameInfos = document.querySelectorAll(".frame_info");
+  var exceptionInfos = document.querySelectorAll(".exception");
 
-    function switchTo(el) {
-        if(previousFrameInfo) previousFrameInfo.style.display = "none";
-        previousFrameInfo = el;
+  var selectFrame = function(index, el) {
+    if(previousFrame) {
+        previousFrame.className = "";
+    }
+    el.className = "selected";
+    previousFrame = el;
+    displayFrame(el.attributes["data-index"].value);
+  }
 
-        for(var i = 0; i < allFrameInfos.length; i++) {
-            allFrameInfos[i].style.display = "none";
-        }
-
-        el.style.display = "block";
+  var displayFrame = function(index) {
+    var el = allFrameInfos[index];
+    var exceptEl = exceptionInfos[index];
+    for(var i = 0; i < allFrameInfos.length; i++) {
+      allFrameInfos[i].style.display = "none";
+      exceptionInfos[i].style.display = "none";
     }
 
-    function selectFrameInfo(index) {
-        var el = allFrameInfos[index];
-        if(el) {
-          return switchTo(el);
-        }
-    }
+    el.style.display = "block";
+    exceptEl.style.display = "block";
+  }
 
-    for(var i = 0; i < allFrames.length; i++) {
-        (function(i, el) {
-            var el = allFrames[i];
-            el.onclick = function() {
-              debugger;
-                if(previousFrame) {
-                    previousFrame.className = "";
-                }
-                el.className = "selected";
-                previousFrame = el;
+  for(var i = 0; i < allFrames.length; i++) {
+    (function(i, el) {
+      var el = allFrames[i];
+      var index = i;
+      el.onclick = function() {
+        selectFrame(index, el);
+      };
+    })(i);
+  }
 
-                selectFrameInfo(el.attributes["data-index"].value);
-            };
-        })(i);
-    }
-
-    // This is the second query performed for frames; maybe the 'allFrames' list
-    // currently used and this list can be better used to avoid the repetition:
-    var applicationFramesCount = document.querySelectorAll(
-        "ul.frames li[data-context=application]"
-    ).length;
-
-    var applicationFramesButtonIsInstalled = false;
-    var applicationFramesButton = document.getElementById("application_frames");
-    var allFramesButton = document.getElementById("all_frames");
-
-    // The application frames button only needs to be bound if
-    // there are actually any application frames to look at.
-    var installApplicationFramesButton = function() {
-        applicationFramesButton.onclick = function() {
-            allFramesButton.className = "";
-            applicationFramesButton.className = "selected";
-            for(var i = 0; i < allFrames.length; i++) {
-                if(allFrames[i].attributes["data-context"].value == "application") {
-                    allFrames[i].style.display = "block";
-                } else {
-                    allFrames[i].style.display = "none";
-                }
-            }
-            return false;
-        };
-
-        applicationFramesButtonIsInstalled = true;
-    }
-
-    allFramesButton.onclick = function() {
-        if(applicationFramesButtonIsInstalled) {
-            applicationFramesButton.className = "";
-        }
-
-        allFramesButton.className = "selected";
-        for(var i = 0; i < allFrames.length; i++) {
-            allFrames[i].style.display = "block";
-        }
-        return false;
-    };
-
-    // If there are no application frames, select the 'All Frames'
-    // tab by default.
-    if(applicationFramesCount > 0) {
-        installApplicationFramesButton();
-        applicationFramesButton.onclick();
-    } else {
-        applicationFramesButton.className = "disabled";
-        applicationFramesButton.title = "No application frames available";
-        allFramesButton.onclick();
-    }
+  selectFrame(0, allFrames[0]);
 })();
 </script>
 <script src="/lib/better_errors/prism.js">
