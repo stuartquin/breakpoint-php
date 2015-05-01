@@ -52,14 +52,11 @@ class Frame {
     }
   
     $errorType = getErrorType($errNum);
-    if ($errorType === null) {
-      return FALSE;
+    if ($errorType !== null) {
+      $trace = debug_backtrace();
+      Frame::Frame()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
     }
-    var_dump($errorType);
-    var_dump($errstr);
 
-    $trace = debug_backtrace();
-    Frame::Frame()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
     Frame::Frame()->render();
     return TRUE;
   }
