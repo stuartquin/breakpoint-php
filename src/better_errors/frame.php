@@ -134,9 +134,13 @@ class Frame {
 
   public function render() {
     if (count($this->frames) > 0) {
-      global $GlobalDebuggerFrames, $GlobalDebuggerExceptions;
+      global $GlobalDebuggerFrames, $GlobalDebuggerExceptions, $GlobalDebuggerPrismCSS, $GlobalDebuggerPrismJS;
       $GlobalDebuggerFrames = $this->frames;
       $GlobalDebuggerExceptions = $this->exceptions;
+      $GlobalDebuggerPrismJS = file_get_contents(dirname(__file__)."/prism.js");
+      $GlobalDebuggerPrismCSS = file_get_contents(dirname(__file__)."/prism.css");
+      $GlobalDebuggerCSS = file_get_contents(dirname(__file__)."/debugger.css");
+
       include("debug_template.php");
       exit;
     }
