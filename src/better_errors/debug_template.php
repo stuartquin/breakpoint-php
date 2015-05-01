@@ -5,7 +5,7 @@ $frames = $GlobalDebuggerFrames;
 $exceptions = $GlobalDebuggerExceptions;
 
 function formatted_lines($frame) {
-  $linesBack = 8;
+  $linesBack = 10;
   $lines = $frame["lines"];
   $lineNum = $frame["line_num"];
   $startNum = max(0, $lineNum - $linesBack) + 1;
@@ -28,32 +28,10 @@ function formatted_lines($frame) {
   return $output."</code></pre>";
 }
 
-function formatted_nums($frame) {
-  $output = "<div class='code_linenums'>";
-
-  $linesBack = 7;
-  $lines = $frame["lines"];
-  $lineNum = $frame["line_num"];
-
-  $startNum = max(0, $lineNum - $linesBack) + 1;
-  $endNum = min(count($lines), $lineNum + $linesBack);
-
-  for ($i = $startNum; $i < $endNum; $i++) {
-    $line = $lines[$i];
-    $className = "";
-    if ($i + 1 === $lineNum) {
-      $className = "highlight";
-    }
-    $output .= "<span class='{$className}'>{$i}</span>";
-  }
-
-  return $output."</div>";
-}
-
 function formatted_code($frame) {
   return formatted_lines($frame);
 }
-// header("Content-Type:text/html");
+header("Content-Type:text/html");
 ?>
 
 <!DOCTYPE html>
