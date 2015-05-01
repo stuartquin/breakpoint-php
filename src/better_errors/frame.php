@@ -1,13 +1,14 @@
 <?php
+ob_start(PHP_OUTPUT_HANDLER_CLEANABLE);
 error_reporting(E_USER_NOTICE);
 
 function getErrorType($errNum) {
   switch ($errNum) {
-    case E_ERROR: return "FATAL";
-    case E_USER_ERROR: return "ERROR";
-    case E_USER_WARNING: return "WARNING";
-    case E_USER_NOTICE: return "NOTICE";
-    case E_DEPRECATED: return "DEPRECATED";
+    case E_ERROR: return "fatal";
+    case E_USER_ERROR: return "error";
+    case E_USER_WARNING: return "warning";
+    case E_USER_NOTICE: return "notice";
+    case E_DEPRECATED: return "deprecated";
   }
 }
 
@@ -71,17 +72,11 @@ class Frame {
 
   public function except($errType, $errNum, $message, $lineNum, $fileName, $trace) {
     $this->exceptions[] = array(
-      "type" => $errType ." #".$errNum,
+      "type" => $errType,
+      "number" => $errNum,
       "message" => $message,
       "path" => $_SERVER["REQUEST_URI"]
     );
-
-    if ($lineNum ) {
-      // print("<pre>");
-      // var_dump($message);
-      // var_dump($trace);
-      // print("</pre>");
-    }
 
     $trace = $trace[min(count($trace) - 1, 2)];
     $this->createFrame($message, $lineNum, $fileName, $trace);
@@ -121,7 +116,8 @@ class Frame {
 
   public function inspect($local) {
     $this->exceptions[] = array(
-      "type" => "Inspect",
+      "type" => "inspect",
+      "number" => "",
       "message" => "Halted for debugging",
       "path" => $_SERVER["REQUEST_URI"]
     );

@@ -132,10 +132,11 @@ header("Content-Type:text/html");
     <nav class="sidebar">
       <ul class="frames">
       <?php for($i = 0; $i < count($frames); $i++) { ?>
-      <?php $frame = $frames[$i]; ?>
+      <?php $frame = $frames[$i]; 
+            $exception = $exceptions[$i];?>
         <li class="" data-context="" data-index="<?= $i ?>">
           <span class='stroke'></span>
-          <i class="icon"></i>
+          <i class="icon icon-<?=$exception["type"]?>"></i>
           <div class="info">
             <div class="name">
             <?php if (isset($frame["class_name"])) { ?>
@@ -166,38 +167,23 @@ header("Content-Type:text/html");
       </header>
       
       <div class="sub">
-          <h3>Request info</h3>
-          <div class='inset variables'>
-              <table class="var_table">
-                  <?php if(isset($frame["request"])){ ?>
-                  <tr><td class="name">Request</td><td><pre><?php print_r($frame["request"]) ?></pre></td></tr>
-                  <?php } ?>
-                  <?php if(isset($frame["session"])){ ?>
-                  <tr><td class="name">Session</td><td><pre><?php print_r($frame["session"]) ?></pre></td></tr>
-                  <?php } ?>
-              </table>
+      <h3 class="sub-title" data-sub="request-<?=$i?>">Request info</h3>
+          <div class='inset variables' id="vars-request-<?=$i?>">
+            <?= output_map($frame["request"], "request", $i); ?>
           </div>
       </div>
       
       <div class="sub">
-          <h3>Local Variables</h3>
-          <div class='inset variables'>
-              <table class="var_table">
-                  <?php foreach($frame["local"] as $name => $val) { ?>
-                  <tr><td class="name"><?= $name ?></td><td><pre><?php print_r($val) ?></pre></td></tr>
-                  <?php } ?>
-              </table>
+          <h3 class="sub-title" data-sub="local-<?=$i?>">Local Variables</h3>
+          <div class='inset variables' id="vars-local-<?=$i?>">
+            <?= output_map($frame["local"], "local", $i); ?>
           </div>
       </div>
       
       <div class="sub">
-          <h3>Instance Variables</h3>
-          <div class="inset variables">
-              <table class="var_table">
-                  <?php foreach($frame["instance"] as $name => $val) { ?>
-                  <tr><td class="name"><?= $name ?></td><td><pre><?php print_r($val) ?></pre></td></tr>
-                  <?php } ?>
-              </table>
+          <h3 class="sub-title" data-sub="instance-<?=$i?>">Instance Variables</h3>
+          <div class="inset variables" id="vars-instance-<?=$i?>">
+            <?= output_map($frame["instance"], "instance", $i); ?>
           </div>
       </div>
     </div> <!-- frame_info -->
@@ -211,6 +197,8 @@ header("Content-Type:text/html");
   var allFrames = document.querySelectorAll("ul.frames li");
   var allFrameInfos = document.querySelectorAll(".frame_info");
   var exceptionInfos = document.querySelectorAll(".exception");
+  var expandable = document.querySelectorAll(".expandable-object");
+  var subTitles = document.querySelectorAll(".sub-title");
 
   var selectFrame = function(index, el) {
     if(previousFrame) {
@@ -228,9 +216,27 @@ header("Content-Type:text/html");
       allFrameInfos[i].style.display = "none";
       exceptionInfos[i].style.display = "none";
     }
-
     el.style.display = "block";
     exceptEl.style.display = "block";
+  }
+
+  var toggleDisplay = function(el) {
+    if (el.style.display == "block") {
+      el.style.display = "none";
+    } else {
+      el.style.display = "block";
+    }
+  };
+
+  for(var i = 0; i < subTitles.length; i++) {
+    (function(i, el) {
+      var el = subTitles[i];
+      var index = i;
+      el.onclick = function() {
+        var pane = document.getElementById("vars-"+this.dataset.sub);
+        toggleDisplay(pane);
+      };
+    })(i);
   }
 
   for(var i = 0; i < allFrames.length; i++) {
@@ -239,6 +245,16 @@ header("Content-Type:text/html");
       var index = i;
       el.onclick = function() {
         selectFrame(index, el);
+      };
+    })(i);
+  }
+
+  for(var i = 0; i < expandable.length; i++) {
+    (function(i, el) {
+      var el = expandable[i];
+      var index = i;
+      el.onclick = function() {
+        toggleDisplay(document.getElementById(this.dataset.info));
       };
     })(i);
   }
