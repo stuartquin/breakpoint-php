@@ -43,27 +43,49 @@ function get_expandable($class, $fields, $type, $id){
   $output.="</span></a>";
 
   $output .= "<div class='var-table var-info' id='{$type}_{$id}'>";
-  $output .= output_map($fields);
+  $output .= output_embedded_map($fields);
   $output .= "</div>";
+
+  return $output;
+}
+
+function get_flattened($class, $fields) {
+  $maxKeys = 4;
+  $keys = array_keys($fields);
+  $output = $class." ";
+  $output .= "<span class='expandable-values'>".implode(", ", array_slice($keys, 0, $maxKeys));
+
+  if (count($keys) > $maxKeys) {
+    $output .= " &hellip;";
+  }
+  $output.="</span>";
 
   return $output;
 }
 
 
 
-function get_formatted($val, $id, $type) {
+function get_formatted($val, $id, $type, $expand=TRUE) {
   $output = $val;
 
   if (is_object($val)) {
     $fields = get_object_vars($val);
     $class = get_class($val);
-    $output = get_expandable($class, $fields, $type, $id);
+    if ($expand) {
+      $output = get_expandable($class, $fields, $type, $id);
+    } else {
+      $output = get_flattened($class, $fields);
+    }
     return array("obj", $output);
   }
 
   if (is_array($val)) {
     $class = get_class($val);
-    $output = get_expandable("Array", $val, $type, $id);
+    if ($expand) {
+      $output = get_expandable("Array", $val, $type, $id);
+    } else {
+      $output = get_flattened("Array", $val);
+    }
     return array("array", $output);
   }
 
@@ -82,17 +104,31 @@ function get_formatted($val, $id, $type) {
   return array("default", $output);
 }
 
+function get_formatted_row($key, $format) {
+  $output .= "<tr>";
+  $output .= "<td class='name'>$key</td>";
+  $output .= "<td class='value-{$format[0]}'>{$format[1]}</td>";
+  $output .= "</tr>";
+  return $output;
+}
+
 function output_map($map, $type, $frame) {
   $output = "<table class='var_table'>";
   $id = 0;
   foreach($map as $key => $val) {
     $format = get_formatted($val, $frame."_".$id, $type);
+    $output .= get_formatted_row($key, $format);
+    $id++;
+  }
+  return $output."</table>";
+}
 
-    $output .= "<tr>"; 
-    $output .= "<td class='name'>$key</td>"; 
-    $output .= "<td class='value-{$format[0]}'>{$format[1]}</td>"; 
-    $output .= "</tr>";
-
+function output_embedded_map($map) {
+  $output = "<table class='var_table'>";
+  $id = 0;
+  foreach($map as $key => $val) {
+    $format = get_formatted($val, $frame."_".$id, $type, FALSE);
+    $output .= get_formatted_row($key, $format);
     $id++;
   }
   return $output."</table>";
