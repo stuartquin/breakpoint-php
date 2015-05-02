@@ -3,30 +3,6 @@ global $GlobalDebuggerFrames, $GlobalDebuggerExceptions, $GlobalDebuggerPrismCSS
 $frames = $GlobalDebuggerFrames;
 $exceptions = $GlobalDebuggerExceptions;
 
-function formatted_lines($frame) {
-  $linesBack = 10;
-  $lines = $frame["lines"];
-  $lineNum = $frame["line_num"];
-  $startNum = max(0, $lineNum - $linesBack) + 1;
-  $endNum = min(count($lines), $lineNum + $linesBack);
-  $highlightLine = $lineNum;
-
-  $output = "<pre data-line='".$highlightLine."'";
-  $output .= " data-line-offset='".$startNum."'>";
-  $output .= "<code class='language-php'>";
-
-  for ($i = $startNum; $i < $endNum; $i++) {
-    $line = $lines[$i];
-    $className = "";
-    if ($i + 1 === $lineNum) {
-      $className = "highlight";
-    }
-    $output .= $line;
-  }
-
-  return $output."</code></pre>";
-}
-
 function get_expandable($class, $fields, $type, $id){
   $maxKeys = 4;
   $keys = array_keys($fields);
@@ -62,8 +38,6 @@ function get_flattened($class, $fields) {
 
   return $output;
 }
-
-
 
 function get_formatted($val, $id, $type, $expand=TRUE) {
   $output = $val;
@@ -134,12 +108,6 @@ function output_embedded_map($map) {
   return $output."</table>";
 }
 
-
-function formatted_code($frame) {
-  return formatted_lines($frame);
-}
-
-ob_clean();
 header("Content-Type:text/html");
 ?>
 
@@ -193,31 +161,31 @@ header("Content-Type:text/html");
     <?php $frame = $frames[$i]; ?>
     <div class="frame_info" id="frame_info_<?= $i ?>">
       <header class="trace_info clearfix">
-          <div class="title">
-          <h2 class="name"><?= $frame["method_name"] ?></h2>
-              <div class="location"><span class="filename"><a href=""><?= $frame["filename"] ?></a></span></div>
-          </div>
-          <div class="code_block clearfix">
-            <?= formatted_code($frame); ?>
-          </div>
+         <div class="title">
+         <h2 class="name"><?= $frame["method_name"] ?></h2>
+             <div class="location"><span class="filename"><a href=""><?= $frame["filename"] ?></a></span></div>
+         </div>
+         <div class="code_block clearfix">
+           <?= $frame["formatted_lines"] ?>
+         </div>
       </header>
       <div class="sub">
       <h3 class="sub-title" data-sub="request-<?=$i?>">Request info</h3>
-          <div class='inset variables' id="vars-request-<?=$i?>">
-            <?= output_map($frame["request"], "request", $i); ?>
-          </div>
+         <div class='inset variables' id="vars-request-<?=$i?>">
+           <?= output_map($frame["request"], "request", $i); ?>
+         </div>
       </div>
       <div class="sub">
-          <h3 class="sub-title" data-sub="local-<?=$i?>">Local Variables</h3>
-          <div class='inset variables' id="vars-local-<?=$i?>">
-            <?= output_map($frame["local"], "local", $i); ?>
-          </div>
+        <h3 class="sub-title" data-sub="local-<?=$i?>"><?= $frame["inspect"] ?></h3>
+        <div class='inset variables' id="vars-local-<?=$i?>">
+          <?= output_map($frame["local"], "local", $i); ?>
+        </div>
       </div>
       <div class="sub">
-          <h3 class="sub-title" data-sub="instance-<?=$i?>">Instance Variables</h3>
-          <div class="inset variables" id="vars-instance-<?=$i?>">
-            <?= output_map($frame["instance"], "instance", $i); ?>
-          </div>
+         <h3 class="sub-title" data-sub="instance-<?=$i?>">Instance Variables</h3>
+         <div class="inset variables" id="vars-instance-<?=$i?>">
+           <?= output_map($frame["instance"], "instance", $i); ?>
+         </div>
       </div>
     </div> <!-- frame_info -->
     <?php } ?>

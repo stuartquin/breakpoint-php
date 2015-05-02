@@ -79,6 +79,7 @@ class BetterErrors {
     );
 
     $debugTrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5);
+
     $trace = $debugTrace[1];
     $trace["local"] = $local;
     $instance->createFrame("Frame", $debugTrace[0]["line"], $debugTrace[0]["file"], $trace);
@@ -125,7 +126,42 @@ class BetterErrors {
       $frame["method_name"] = "";
     }
 
-    $this->frames[] = $frame;
+    $this->frames[] = $this->getFormattedLines($frame);
+  }
+
+
+  public function getFormattedLines($frame) {
+    $linesBack = 10;
+    $lines = $frame["lines"];
+    $lineNum = $frame["line_num"];
+    $startNum = max(0, $lineNum - $linesBack) + 1;
+    $endNum = min(count($lines), $lineNum + $linesBack);
+    $highlightLine = $lineNum;
+
+    $output = "<pre data-line='".$highlightLine."'";
+    $output .= " data-line-offset='".$startNum."'>";
+    $output .= "<code class='language-php'>";
+
+    for ($i = $startNum; $i < $endNum; $i++) {
+      $line = $lines[$i];
+      $className = "";
+      if ($i + 1 === $lineNum) {
+        $className = "highlight";
+        $matches = array();
+        preg_match("/Inspect\((.*)\)/", $line, $matches);
+
+        if (isset($matches[1])) {
+          $frame["inspect"] = $matches[1]; 
+        } else {
+          $frame["inspect"] = "Inspect";
+        }
+      }
+      $output .= $line;
+    }
+
+    $frame["formatted_lines"] = $output."</code></pre>";
+
+    return $frame;
   }
 
   public function render() {
