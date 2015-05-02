@@ -103,17 +103,21 @@ class BetterErrors {
     $frame["message"] = $message;
     $frame["lines"] = file($fileName);
     $frame["line_num"] = $lineNum;
-
     $frame["request"] = $_REQUEST;
+
     if (isset($trace["local"])) {
       $frame["local"] = $trace["local"];
     } else {
       $frame["local"] = array();
     }
-    unset($frame["local"]["this"]);
+
+    if (is_array($frame["local"])) {
+      unset($frame["local"]["this"]);
+    }
 
     if (isset($trace["object"])) {
       $frame["instance"] = get_object_vars($trace["object"]);
+      unset($frame["instance"]["bettererrors"]);
       $frame["class_name"] = $trace["class"];
     } else {
       $frame["instance"] = array();
@@ -128,7 +132,6 @@ class BetterErrors {
 
     $this->frames[] = $this->getFormattedLines($frame);
   }
-
 
   public function getFormattedLines($frame) {
     $linesBack = 10;
