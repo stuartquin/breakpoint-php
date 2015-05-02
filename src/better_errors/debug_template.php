@@ -22,7 +22,7 @@ function get_formatted_primitive($val) {
 }
 
 function get_formatted_row($key, $format) {
-  $output .= "<tr>";
+  $output = "<tr>";
   $output .= "<td class='name'>$key</td>";
   $output .= "<td class='value-{$format[0]}'>{$format[1]}</td>";
   $output .= "</tr>";
@@ -30,8 +30,8 @@ function get_formatted_row($key, $format) {
 }
 
 function get_expandable($class, $fields, $frame_var_id, $depth){
-  $maxDepth = 2;
-  $maxKeys = 4;
+  $maxDepth = 3;
+  $maxKeys = 5;
   $keys = array_keys($fields);
   $expand = $depth < $maxDepth;
 
