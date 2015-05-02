@@ -1,6 +1,5 @@
 <?php
-ob_start(PHP_OUTPUT_HANDLER_CLEANABLE);
-error_reporting(E_USER_NOTICE);
+ob_start();
 
 function getErrorType($errNum) {
   switch ($errNum) {
@@ -12,10 +11,10 @@ function getErrorType($errNum) {
   }
 }
 
-register_shutdown_function("Frame::FatalErrorHandler");
-set_error_handler("Frame::FrameErrorHandler");
+register_shutdown_function("BetterErrors::FatalErrorHandler");
+set_error_handler("BetterErrors::FrameErrorHandler");
 
-class Frame {
+class BetterErrors {
   static $DEBUG_ERROR_LEVEL = E_USER_WARNING;
   private $frames = array();
   private $exceptions = array();
@@ -33,7 +32,7 @@ class Frame {
   
     $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
     if ($errNum <= error_reporting()) {
-      Frame::Frame()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
+      BetterErrors::BetterErrors()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
       return TRUE;
     }
   }
@@ -55,19 +54,34 @@ class Frame {
     $errorType = getErrorType($errNum);
     if ($errorType !== null) {
       $trace = debug_backtrace();
-      Frame::Frame()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
+      BetterErrors::BetterErrors()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
     }
 
-    Frame::Frame()->render();
+    BetterErrors::BetterErrors()->render();
     return TRUE;
   }
 
-  public static function Frame() {
-    if (Frame::$instance === null) {
-      Frame::$instance = new Frame();
+  public static function BetterErrors() {
+    if (BetterErrors::$instance === null) {
+      BetterErrors::$instance = new BetterErrors();
     }
 
-    return Frame::$instance;
+    return BetterErrors::$instance;
+  }
+
+  public static function Inspect($local) {
+    $instance = BetterErrors::BetterErrors();
+    $instance->exceptions[] = array(
+      "type" => "inspect",
+      "number" => "",
+      "message" => "Halted for debugging",
+      "path" => $_SERVER["REQUEST_URI"]
+    );
+
+    $debugTrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5);
+    $trace = $debugTrace[1];
+    $trace["local"] = $local;
+    $instance->createFrame("Frame", $debugTrace[0]["line"], $debugTrace[0]["file"], $trace);
   }
 
   public function except($errType, $errNum, $message, $lineNum, $fileName, $trace) {
@@ -114,22 +128,9 @@ class Frame {
     $this->frames[] = $frame;
   }
 
-  public function inspect($local) {
-    $this->exceptions[] = array(
-      "type" => "inspect",
-      "number" => "",
-      "message" => "Halted for debugging",
-      "path" => $_SERVER["REQUEST_URI"]
-    );
-
-    $debugTrace = debug_backtrace();
-    $trace = $debugTrace[min(count($debugTrace) - 1, 2)];
-    $trace["local"] = $local;
-    $this->createFrame("Frame", $debugTrace[0]["line"], $debugTrace[0]["file"], $trace);
-  }
-
   public function render() {
     if (count($this->frames) > 0) {
+      ob_end_clean();
       global $GlobalDebuggerFrames, $GlobalDebuggerExceptions, $GlobalDebuggerPrismCSS, $GlobalDebuggerPrismJS;
       $GlobalDebuggerFrames = $this->frames;
       $GlobalDebuggerExceptions = $this->exceptions;
