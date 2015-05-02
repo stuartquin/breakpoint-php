@@ -201,21 +201,18 @@ header("Content-Type:text/html");
             <?= formatted_code($frame); ?>
           </div>
       </header>
-      
       <div class="sub">
       <h3 class="sub-title" data-sub="request-<?=$i?>">Request info</h3>
           <div class='inset variables' id="vars-request-<?=$i?>">
             <?= output_map($frame["request"], "request", $i); ?>
           </div>
       </div>
-      
       <div class="sub">
           <h3 class="sub-title" data-sub="local-<?=$i?>">Local Variables</h3>
           <div class='inset variables' id="vars-local-<?=$i?>">
             <?= output_map($frame["local"], "local", $i); ?>
           </div>
       </div>
-      
       <div class="sub">
           <h3 class="sub-title" data-sub="instance-<?=$i?>">Instance Variables</h3>
           <div class="inset variables" id="vars-instance-<?=$i?>">
