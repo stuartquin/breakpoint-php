@@ -3,65 +3,8 @@ global $GlobalDebuggerFrames, $GlobalDebuggerExceptions, $GlobalDebuggerPrismCSS
 $frames = $GlobalDebuggerFrames;
 $exceptions = $GlobalDebuggerExceptions;
 
-function get_expandable($class, $fields, $type, $id){
-  $maxKeys = 4;
-  $keys = array_keys($fields);
-
-  $output = "<a href='#' class='expandable-object' data-class='$class'";
-  $output .=" data-type='$type' data-info='{$type}_{$id}'>";
-  $output .= $class." ";
-  $output .= "<span class='expandable-values'>".implode(", ", array_slice($keys, 0, $maxKeys));
-
-  if (count($keys) > $maxKeys) {
-    $output .= " &hellip;";
-  }
-
-  $output.="</span></a>";
-
-  $output .= "<div class='var-table var-info' id='{$type}_{$id}'>";
-  $output .= output_embedded_map($fields);
-  $output .= "</div>";
-
-  return $output;
-}
-
-function get_flattened($class, $fields) {
-  $maxKeys = 4;
-  $keys = array_keys($fields);
-  $output = $class." ";
-  $output .= "<span class='expandable-values'>".implode(", ", array_slice($keys, 0, $maxKeys));
-
-  if (count($keys) > $maxKeys) {
-    $output .= " &hellip;";
-  }
-  $output.="</span>";
-
-  return $output;
-}
-
-function get_formatted($val, $id, $type, $expand=TRUE) {
+function get_formatted_primitive($val) {
   $output = $val;
-
-  if (is_object($val)) {
-    $fields = get_object_vars($val);
-    $class = get_class($val);
-    if ($expand) {
-      $output = get_expandable($class, $fields, $type, $id);
-    } else {
-      $output = get_flattened($class, $fields);
-    }
-    return array("obj", $output);
-  }
-
-  if (is_array($val)) {
-    $class = get_class($val);
-    if ($expand) {
-      $output = get_expandable("Array", $val, $type, $id);
-    } else {
-      $output = get_flattened("Array", $val);
-    }
-    return array("array", $output);
-  }
 
   if (is_null($val)) {
     return array("null", "null");
@@ -86,22 +29,54 @@ function get_formatted_row($key, $format) {
   return $output;
 }
 
-function output_map($map, $type, $frame) {
-  $output = "<table class='var_table'>";
-  $id = 0;
-  foreach($map as $key => $val) {
-    $format = get_formatted($val, $frame."_".$id, $type);
-    $output .= get_formatted_row($key, $format);
-    $id++;
+function get_expandable($class, $fields, $frame_var_id, $depth){
+  $maxDepth = 2;
+  $maxKeys = 4;
+  $keys = array_keys($fields);
+  $expand = $depth < $maxDepth;
+
+  $output = "";
+  if ($expand) {
+    $output .= "<a href='#' class='expandable-object' data-class='$class'";
+    $output .=" data-type='$type' data-info='$frame_var_id'>";
   }
-  return $output."</table>";
+  $output .= $class." ";
+  $output .= "<span class='expandable-values'>".implode(", ", array_slice($keys, 0, $maxKeys));
+
+  if (count($keys) > $maxKeys) {
+    $output .= " &hellip;";
+  }
+
+  $output.="</span>";
+
+  if ($expand) {
+    $output .= "</a>";
+    $output .= "<div class='var-table var-info' id='$frame_var_id'>";
+    $output .= output_map($fields, $frame_var_id, $depth + 1);
+    $output .= "</div>";
+  }
+
+  return $output;
 }
 
-function output_embedded_map($map) {
+function get_formatted_value($val, $frame_var_id, $depth=0) {
+  if (is_object($val)) {
+    $fields = get_object_vars($val);
+    $class = get_class($val);
+    return array("obj", get_expandable($class, $fields, $frame_var_id, $depth));
+  }
+  if (is_array($val)) {
+    $class = get_class($val);
+    return array("array", get_expandable("Array", $val, $frame_var_id, $depth));
+  }
+  return get_formatted_primitive($val);
+}
+
+function output_map($map, $frame_id, $depth=0) {
   $output = "<table class='var_table'>";
   $id = 0;
   foreach($map as $key => $val) {
-    $format = get_formatted($val, $frame."_".$id, $type, FALSE);
+    $format = get_formatted_value($val, $frame_id."_".$id,  $depth);
     $output .= get_formatted_row($key, $format);
     $id++;
   }
@@ -172,19 +147,19 @@ header("Content-Type:text/html");
       <div class="sub">
       <h3 class="sub-title" data-sub="request-<?=$i?>">Request info</h3>
          <div class='inset variables' id="vars-request-<?=$i?>">
-           <?= output_map($frame["request"], "request", $i); ?>
+           <?= output_map($frame["request"], "request_".$i); ?>
          </div>
       </div>
       <div class="sub">
         <h3 class="sub-title" data-sub="local-<?=$i?>"><?= $frame["inspect"] ?></h3>
         <div class='inset variables' id="vars-local-<?=$i?>">
-          <?= output_map($frame["local"], "local", $i); ?>
+          <?= output_map($frame["local"], "local_".$i); ?>
         </div>
       </div>
       <div class="sub">
          <h3 class="sub-title" data-sub="instance-<?=$i?>">Instance Variables</h3>
          <div class="inset variables" id="vars-instance-<?=$i?>">
-           <?= output_map($frame["instance"], "instance", $i); ?>
+           <?= output_map($frame["instance"], "instance_".$i); ?>
          </div>
       </div>
     </div> <!-- frame_info -->
