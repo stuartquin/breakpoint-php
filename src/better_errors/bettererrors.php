@@ -29,7 +29,7 @@ class BetterErrors {
     if ($errorType === null) {
       return FALSE;
     }
-  
+
     $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
     if ($errNum <= error_reporting()) {
       BetterErrors::BetterErrors()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
@@ -42,7 +42,7 @@ class BetterErrors {
     $errstr = "shutdown";
     $errNum = E_CORE_ERROR;
     $errline = 0;
-  
+
     $error = error_get_last();
     if( $error !== NULL) {
       $errNum  = $error["type"];
@@ -50,7 +50,7 @@ class BetterErrors {
       $errline = $error["line"];
       $errstr  = $error["message"];
     }
-  
+
     $errorType = getErrorType($errNum);
     if ($errorType !== null) {
       $trace = debug_backtrace();
