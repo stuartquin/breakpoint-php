@@ -52,7 +52,7 @@ function get_expandable($class, $fields, $frame_var_id, $depth){
   if ($expand) {
     $output .= "</a>";
     $output .= "<div class='var-table var-info' id='$frame_var_id'>";
-    $output .= output_map($fields, $frame_var_id, $depth + 1);
+    $output .= output_variables($fields, $frame_var_id, $depth + 1);
     $output .= "</div>";
   }
 
@@ -72,13 +72,19 @@ function get_formatted_value($val, $frame_var_id, $depth=0) {
   return get_formatted_primitive($val);
 }
 
-function output_map($map, $frame_id, $depth=0) {
+function output_variables($map, $frame_id, $depth=0) {
   $output = "<table class='var_table'>";
-  $id = 0;
-  foreach($map as $key => $val) {
-    $format = get_formatted_value($val, $frame_id."_".$id,  $depth);
-    $output .= get_formatted_row($key, $format);
-    $id++;
+
+  if (!is_array($map) && !is_object($map)) {
+    $formatted = get_formatted_primitive($map);
+    $output .= get_formatted_row("", $formatted);
+  } else  {
+    $id = 0;
+    foreach($map as $key => $val) {
+      $format = get_formatted_value($val, $frame_id."_".$id,  $depth);
+      $output .= get_formatted_row($key, $format);
+      $id++;
+    }
   }
   return $output."</table>";
 }
@@ -147,19 +153,19 @@ header("Content-Type:text/html");
       <div class="sub">
       <h3 class="sub-title" data-sub="request-<?=$i?>">Request info</h3>
          <div class='inset variables' id="vars-request-<?=$i?>">
-           <?= output_map($frame["request"], "request_".$i); ?>
+           <?= output_variables($frame["request"], "request_".$i); ?>
          </div>
       </div>
       <div class="sub">
         <h3 class="sub-title" data-sub="local-<?=$i?>"><?= $frame["inspect"] ?></h3>
         <div class='inset variables' id="vars-local-<?=$i?>">
-          <?= output_map($frame["local"], "local_".$i); ?>
+          <?= output_variables($frame["local"], "local_".$i); ?>
         </div>
       </div>
       <div class="sub">
          <h3 class="sub-title" data-sub="instance-<?=$i?>">Instance Variables</h3>
          <div class="inset variables" id="vars-instance-<?=$i?>">
-           <?= output_map($frame["instance"], "instance_".$i); ?>
+           <?= output_variables($frame["instance"], "instance_".$i); ?>
          </div>
       </div>
     </div> <!-- frame_info -->
