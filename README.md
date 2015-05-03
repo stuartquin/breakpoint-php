@@ -4,7 +4,7 @@ A more useful `var_dump`!
 Inspect breakpoints and handle errors with a visual data explorer
 
 Heavily influenced by and borrowing from https://github.com/charliesome/better_errors/
-and https://github.com/charliesome/better_errors/
+and https://github.com/magnars/prone
 
 ![image](http://i.imgur.com/F7QGBDb.png)
 
