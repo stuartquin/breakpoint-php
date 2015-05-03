@@ -16,6 +16,8 @@ set_error_handler("BetterErrors::FrameErrorHandler");
 
 class BetterErrors {
   static $DEBUG_ERROR_LEVEL = E_USER_WARNING;
+  static $MAX_FRAMES = 15;
+
   private $frames = array();
   private $exceptions = array();
   static $instance = null;
@@ -71,6 +73,11 @@ class BetterErrors {
 
   public static function Inspect($local) {
     $instance = BetterErrors::BetterErrors();
+
+    if ($instance->getFrameCount() > BetterErrors::$MAX_FRAMES) {
+      return;
+    }
+
     $instance->exceptions[] = array(
       "type" => "inspect",
       "number" => "",
@@ -79,10 +86,13 @@ class BetterErrors {
     );
 
     $debugTrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5);
-
     $trace = $debugTrace[1];
     $trace["local"] = $local;
     $instance->createFrame("Frame", $debugTrace[0]["line"], $debugTrace[0]["file"], $trace);
+  }
+
+  public function getFrameCount() {
+    return count($this->frames);
   }
 
   public function except($errType, $errNum, $message, $lineNum, $fileName, $trace) {
