@@ -106,7 +106,11 @@ class BetterErrors {
     $frame["request"] = $_REQUEST;
 
     if (isset($trace["local"])) {
-      $frame["local"] = $trace["local"];
+      if (is_object($trace["local"])) {
+        $frame["local"] = $this->reflect($trace["local"]);
+      } else {
+        $frame["local"] = $trace["local"];
+      }
     } else {
       $frame["local"] = array();
     }
@@ -116,9 +120,13 @@ class BetterErrors {
     }
 
     if (isset($trace["object"])) {
-      $frame["instance"] = get_object_vars($trace["object"]);
-      unset($frame["instance"]["bettererrors"]);
+      if (is_object($trace["object"])) {
+        $frame["instance"] = $this->reflect($trace["object"]);
+      } else {
+        $frame["instance"] = get_object_vars($trace["object"]);
+      }
       $frame["class_name"] = $trace["class"];
+      unset($frame["instance"]["bettererrors"]);
     } else {
       $frame["instance"] = array();
       $frame["class_name"] = null;
@@ -131,6 +139,18 @@ class BetterErrors {
     }
 
     $this->frames[] = $this->getFormattedLines($frame);
+  }
+
+  public function reflect($obj) {
+    $reflected = array();
+    $reflect = new ReflectionObject($obj);
+    $props = $reflect->getProperties();
+
+    foreach($props as $prop) {
+      $prop->setAccessible(TRUE);
+      $reflected[$prop->getName()] = $prop->getValue($obj);
+    }
+    return $reflected;
   }
 
   public function getFormattedLines($frame) {
