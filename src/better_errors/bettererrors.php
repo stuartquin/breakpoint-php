@@ -11,7 +11,7 @@ function getErrorType($errNum) {
   }
 }
 
-register_shutdown_function("BetterErrors::FatalErrorHandler");
+register_shutdown_function("BetterErrors::ShutdownHandler");
 set_error_handler("BetterErrors::FrameErrorHandler");
 
 class BetterErrors {
@@ -39,7 +39,7 @@ class BetterErrors {
     }
   }
 
-  public static function FatalErrorHandler() {
+  public static function ShutdownHandler() {
     $errfile = "unknown file";
     $errstr = "shutdown";
     $errNum = E_CORE_ERROR;
@@ -54,6 +54,8 @@ class BetterErrors {
     }
 
     $errorType = getErrorType($errNum);
+
+    // If there's an error, show it
     if ($errorType !== null) {
       $trace = debug_backtrace();
       BetterErrors::BetterErrors()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
