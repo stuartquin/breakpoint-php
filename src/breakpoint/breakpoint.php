@@ -13,6 +13,9 @@ class Breakpoint {
   static $instance = null;
   static $level = null;
 
+  function __construct() {
+  }
+
   public static function getErrorType($errNum) {
     switch ($errNum) {
       case E_ERROR: return "fatal";
