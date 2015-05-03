@@ -1,20 +1,10 @@
 <?php
 ob_start();
 
-function getErrorType($errNum) {
-  switch ($errNum) {
-    case E_ERROR: return "fatal";
-    case E_USER_ERROR: return "error";
-    case E_USER_WARNING: return "warning";
-    case E_USER_NOTICE: return "notice";
-    case E_DEPRECATED: return "deprecated";
-  }
-}
+register_shutdown_function("Breakpoint::ShutdownHandler");
+set_error_handler("Breakpoint::FrameErrorHandler");
 
-register_shutdown_function("BetterErrors::ShutdownHandler");
-set_error_handler("BetterErrors::FrameErrorHandler");
-
-class BetterErrors {
+class Breakpoint {
   static $DEBUG_ERROR_LEVEL = E_USER_WARNING;
   static $MAX_FRAMES = 15;
 
@@ -23,18 +13,25 @@ class BetterErrors {
   static $instance = null;
   static $level = null;
 
-  function __construct() {
+  public static function getErrorType($errNum) {
+    switch ($errNum) {
+      case E_ERROR: return "fatal";
+      case E_USER_ERROR: return "error";
+      case E_USER_WARNING: return "warning";
+      case E_USER_NOTICE: return "notice";
+      case E_DEPRECATED: return "deprecated";
+    }
   }
 
   public static function FrameErrorHandler($errNum, $errstr, $errfile, $errline) {
-    $errorType = getErrorType($errNum);
+    $errorType = Breakpoint::getErrorType($errNum);
     if ($errorType === null) {
       return FALSE;
     }
 
     $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
     if ($errNum <= error_reporting()) {
-      BetterErrors::BetterErrors()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
+      Breakpoint::Breakpoint()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
       return TRUE;
     }
   }
@@ -53,30 +50,29 @@ class BetterErrors {
       $errstr  = $error["message"];
     }
 
-    $errorType = getErrorType($errNum);
-
+    $errorType = Breakpoint::getErrorType($errNum);
     // If there's an error, show it
     if ($errorType !== null) {
       $trace = debug_backtrace();
-      BetterErrors::BetterErrors()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
+      Breakpoint::Breakpoint()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
     }
 
-    BetterErrors::BetterErrors()->render();
+    Breakpoint::Breakpoint()->render();
     return TRUE;
   }
 
-  public static function BetterErrors() {
-    if (BetterErrors::$instance === null) {
-      BetterErrors::$instance = new BetterErrors();
+  public static function Breakpoint() {
+    if (Breakpoint::$instance === null) {
+      Breakpoint::$instance = new Breakpoint();
     }
 
-    return BetterErrors::$instance;
+    return Breakpoint::$instance;
   }
 
   public static function Inspect($local) {
-    $instance = BetterErrors::BetterErrors();
+    $instance = Breakpoint::Breakpoint();
 
-    if ($instance->getFrameCount() > BetterErrors::$MAX_FRAMES) {
+    if ($instance->getFrameCount() > Breakpoint::$MAX_FRAMES) {
       return;
     }
 
@@ -207,9 +203,9 @@ class BetterErrors {
       $GlobalDebuggerExceptions = $this->exceptions;
       $GlobalDebuggerPrismJS = file_get_contents(dirname(__file__)."/prism.js");
       $GlobalDebuggerPrismCSS = file_get_contents(dirname(__file__)."/prism.css");
-      $GlobalDebuggerCSS = file_get_contents(dirname(__file__)."/debugger.css");
+      $GlobalDebuggerCSS = file_get_contents(dirname(__file__)."/breakpoint.css");
 
-      include("debug_template.php");
+      include("breakpoint_template.php");
       exit;
     }
   }
