@@ -1,6 +1,7 @@
 # Breakpoint PHP
 
 A more useful `var_dump`!
+
 Inspect breakpoints and handle errors with a visual data explorer
 
 Heavily influenced by and borrowing from https://github.com/charliesome/better_errors/
@@ -20,6 +21,8 @@ require_once("breakpoint/src/breakpoint/breakpoint.php");
 (Composer package coming soon)
 
 Errors will now automatically be handled by Breakpoint.
+Error levels reported are determined by the application's `error_reporting`
+level.
 
 To get a snapshot of execution and inspect a specific variable insert the
 following where required:
