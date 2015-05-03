@@ -7,6 +7,8 @@ Inspect breakpoints and handle errors with a visual data explorer
 Heavily influenced by and borrowing from https://github.com/charliesome/better_errors/
 and https://github.com/magnars/prone
 
+Syntaxt highlighting using http://prismjs.com/
+
 ![image](http://i.imgur.com/F7QGBDb.png)
 
 ## Usage
@@ -36,3 +38,8 @@ Breakpoint::Inspect(get_defined_vars());
 ```
 
 **NOTE:** Breakpoint is a development tool it should not be used in production!
+
+
+## Contribute
+
+Bugs? Features missing? Please grab a fork or raise an issue!
