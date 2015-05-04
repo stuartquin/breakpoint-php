@@ -1,0 +1,16 @@
+{
+    "name": "stuartquin/breakpoint-php",
+    "description": "Visual explorer for PHP errors and breakpoints",
+    "authors": [
+        {
+            "name": "Stuart Quin",
+            "email": "stuart.quin@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "StuartQuin\\Breakpoint\\": "src"
+        }
+    }
+}
