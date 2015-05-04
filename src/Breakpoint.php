@@ -1,7 +1,4 @@
 <?php namespace StuartQuin\Breakpoint;
-
-var_dump("ARRAG");
-
 ob_start();
 
 register_shutdown_function("Breakpoint::ShutdownHandler");
