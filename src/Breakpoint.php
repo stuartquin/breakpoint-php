@@ -1,4 +1,7 @@
-<?php
+<?php namespace StuartQuin\Breakpoint;
+
+var_dump("ARRAG");
+
 ob_start();
 
 register_shutdown_function("Breakpoint::ShutdownHandler");
@@ -86,16 +89,22 @@ class Breakpoint {
       return;
     }
 
-    $instance->exceptions[] = array(
-      "type" => "inspect",
-      "number" => "",
-      "message" => "Halted for debugging",
-      "path" => $_SERVER["REQUEST_URI"]
-    );
+    if (isset($_SERVER["REQUEST_URI"])) {
+      $instance->exceptions[] = array(
+        "type" => "inspect",
+        "number" => "",
+        "message" => "Halted for debugging",
+        "path" => $_SERVER["REQUEST_URI"]
+      );
+    }
 
     $debugTrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5);
-    $trace = $debugTrace[1];
-    $trace["local"] = $local;
+    if (isset($debugTrace[1])) {
+      $trace = $debugTrace[1];
+      $trace["local"] = $local;
+    } else {
+      $trace = array();
+    }
     $instance->createFrame("Frame", $debugTrace[0]["line"], $debugTrace[0]["file"], $trace);
   }
 
