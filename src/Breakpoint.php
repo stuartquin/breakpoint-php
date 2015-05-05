@@ -1,8 +1,5 @@
-<?php namespace StuartQuin\Breakpoint;
+<?php
 ob_start();
-
-register_shutdown_function("Breakpoint::ShutdownHandler");
-set_error_handler("Breakpoint::FrameErrorHandler");
 
 class Breakpoint {
   static $DEBUG_ERROR_LEVEL = E_USER_WARNING;
@@ -21,6 +18,9 @@ class Breakpoint {
     } else {
       $this->startTime = microtime(TRUE);
     }
+
+    set_error_handler(array($this, "frameErrorHandler"));
+    register_shutdown_function(array($this, "shutdownHandler"));
   }
 
   public static function getErrorType($errNum) {
@@ -33,20 +33,22 @@ class Breakpoint {
     }
   }
 
-  public static function FrameErrorHandler($errNum, $errstr, $errfile, $errline) {
+  public function frameErrorHandler($errNum, $errstr, $errfile, $errline) {
+
     $errorType = Breakpoint::getErrorType($errNum);
     if ($errorType === null) {
       return FALSE;
     }
 
     $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
+
     if ($errNum <= error_reporting()) {
       Breakpoint::Breakpoint()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
       return TRUE;
     }
   }
 
-  public static function ShutdownHandler() {
+  public static function shutdownHandler() {
     $errfile = "unknown file";
     $errstr = "shutdown";
     $errNum = E_CORE_ERROR;
@@ -61,9 +63,10 @@ class Breakpoint {
     }
 
     $errorType = Breakpoint::getErrorType($errNum);
+
     // If there's an error, show it
     if ($errorType !== null) {
-      $trace = debug_backtrace();
+      $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
       Breakpoint::Breakpoint()->except($errorType, $errNum, $errstr, $errline, $errfile, $trace);
     }
 
@@ -145,7 +148,7 @@ class Breakpoint {
       unset($frame["local"]["this"]);
     }
 
-    if (isset($trace["object"])) {
+    if (isset($trace["class"]) && $trace["class"] !== "Breakpoint") {
       if (is_object($trace["object"])) {
         $frame["instance"] = $this->reflect($trace["object"]);
       } else {
