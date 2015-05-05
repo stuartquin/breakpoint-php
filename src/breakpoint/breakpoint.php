@@ -13,7 +13,14 @@ class Breakpoint {
   static $instance = null;
   static $level = null;
 
+  private $startTime = null;
+
   function __construct() {
+    if (isset($_SERVER["REQUEST_TIME_FLOAT"])) {
+      $this->startTime = $_SERVER["REQUEST_TIME_FLOAT"];
+    } else {
+      $this->startTime = microtime(TRUE);
+    }
   }
 
   public static function getErrorType($errNum) {
@@ -115,6 +122,8 @@ class Breakpoint {
     $frame["lines"] = file($fileName);
     $frame["line_num"] = $lineNum;
     $frame["request"] = $_REQUEST;
+    $time = microtime(TRUE); 
+    $frame["time"] = $time - $this->startTime;
 
     if (isset($trace["local"])) {
       if (is_object($trace["local"])) {
@@ -140,7 +149,7 @@ class Breakpoint {
       unset($frame["instance"]["bettererrors"]);
     } else {
       $frame["instance"] = array();
-      $frame["class_name"] = null;
+      $frame["class_name"] = $fileName;
     }
 
     if (isset($trace["function"])) {
@@ -213,3 +222,5 @@ class Breakpoint {
     }
   }
 }
+
+Breakpoint::Breakpoint();

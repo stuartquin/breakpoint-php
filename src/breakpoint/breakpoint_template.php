@@ -128,9 +128,12 @@ header("Content-Type:text/html");
             <strong><?= $frame["class_name"] ?></strong>
             <?php } ?>
             <span class='method'><?= $frame["method_name"] ?></span>
+            <i style="float: right">
+              <?= number_format($frame["time"], 4) ?>s
+            </i>
             </div>
             <div class="location">
-            <span class="filename"><?= $frame["filename"] ?></span>, line <span class="line"><?= $frame["line_num"] - 1?></span>
+            <span class="filename"><?= $frame["filename"] ?></span>, line <span class="line"><?= $frame["line_num"] ?></span>
             </div>
           </div>
         </li>
