@@ -21,6 +21,18 @@ function get_formatted_primitive($val) {
   return array("default", $output);
 }
 
+function reflect($obj) {
+  $reflected = array();
+  $reflect = new ReflectionObject($obj);
+  $props = $reflect->getProperties();
+
+  foreach($props as $prop) {
+    $prop->setAccessible(TRUE);
+    $reflected[$prop->getName()] = $prop->getValue($obj);
+  }
+  return $reflected;
+}
+
 function get_formatted_row($key, $format) {
   $output = "<tr>";
   $output .= "<td class='name'>$key</td>";
@@ -61,7 +73,7 @@ function get_expandable($class, $fields, $frame_var_id, $depth){
 
 function get_formatted_value($val, $frame_var_id, $depth=0) {
   if (is_object($val)) {
-    $fields = get_object_vars($val);
+    $fields = reflect($val);
     $class = get_class($val);
     return array("obj", get_expandable($class, $fields, $frame_var_id, $depth));
   }
@@ -74,6 +86,10 @@ function get_formatted_value($val, $frame_var_id, $depth=0) {
 
 function output_variables($map, $frame_id, $depth=0) {
   $output = "<table class='var_table'>";
+
+  if (is_object($map)) {
+    $map = reflect($map);
+  }
 
   if (!is_array($map) && !is_object($map)) {
     $formatted = get_formatted_primitive($map);

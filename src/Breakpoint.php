@@ -135,11 +135,7 @@ class Breakpoint {
     $frame["time"] = $time - $this->startTime;
 
     if (isset($trace["local"])) {
-      if (is_object($trace["local"])) {
-        $frame["local"] = $this->reflect($trace["local"]);
-      } else {
-        $frame["local"] = $trace["local"];
-      }
+      $frame["local"] = $trace["local"];
     } else {
       $frame["local"] = array();
     }
@@ -150,12 +146,11 @@ class Breakpoint {
 
     if (isset($trace["class"]) && $trace["class"] !== "Breakpoint") {
       if (is_object($trace["object"])) {
-        $frame["instance"] = $this->reflect($trace["object"]);
+        $frame["instance"] = $trace["object"];
       } else {
         $frame["instance"] = get_object_vars($trace["object"]);
       }
       $frame["class_name"] = $trace["class"];
-      unset($frame["instance"]["bettererrors"]);
     } else {
       $frame["instance"] = array();
       $frame["class_name"] = $fileName;
@@ -168,18 +163,6 @@ class Breakpoint {
     }
 
     $this->frames[] = $this->getFormattedLines($frame);
-  }
-
-  public function reflect($obj) {
-    $reflected = array();
-    $reflect = new ReflectionObject($obj);
-    $props = $reflect->getProperties();
-
-    foreach($props as $prop) {
-      $prop->setAccessible(TRUE);
-      $reflected[$prop->getName()] = $prop->getValue($obj);
-    }
-    return $reflected;
   }
 
   public function getFormattedLines($frame) {
